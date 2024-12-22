@@ -12,6 +12,7 @@ public class MessageBusImpl implements MessageBus {
 
 	private final ConcurrentHashMap<Class<? extends Event<?>>, Queue<MicroService>> eventSubscribers = new ConcurrentHashMap<>(); // events map
 	private final ConcurrentHashMap<Class<? extends Broadcast<?>>, Queue<MicroService>> broadcastSubscribers = new ConcurrentHashMap<>(); // broadcast map
+	private final ConcurrentHashMap<MicroService, Queue<messege>> microServiceQueues= new ConcurrentHashMap<>(); // micro service map
 	
 	private MessageBusImpl() {}
 
@@ -20,17 +21,16 @@ public class MessageBusImpl implements MessageBus {
             instance = new MessageBusImpl();
         return instance;
     }
-	//fff
 
 	@Override
-	public <T> void subscribeEvent(Class<? extends Event<T>> type, MicroService m) {
+	public synchronized <T> void subscribeEvent(Class<? extends Event<T>> type, MicroService m) {
 		// TODO Auto-generated method stub
 		eventSubscribers.computeIfAbsent(type, k -> new LinkedList<>()).add(m); //if event is already exist, add the microService to it list, else create new event type in map and add the microService to it list
 
 	}
 
 	@Override
-	public void subscribeBroadcast(Class<? extends Broadcast> type, MicroService m) {
+	public synchronized void subscribeBroadcast(Class<? extends Broadcast> type, MicroService m) {
 		// TODO Auto-generated method stub
 		broadcastSubscribers.computeIfAbsent(type, k -> new LinkedList<>()).add(m); //if broadcast is already exist, add the microService to it list, else create new broadcast type in map and add the microService to it list
 
@@ -43,32 +43,44 @@ public class MessageBusImpl implements MessageBus {
 	}
 
 	@Override
-	public void sendBroadcast(Broadcast b) {
+	public synchronized void sendBroadcast(Broadcast b) {
 		// TODO Auto-generated method stub
-
+		for(MicroService ms : broadcastSubscribers.get(b)){
+			microServiceQueues.computeIfAbsent(ms, k -> new LinkedList<>()).add(b);
+		}
 	}
 
 	
 	@Override
-	public <T> Future<T> sendEvent(Event<T> e) {
+	public synchronized <T> Future<T> sendEvent(Event<T> e) {
 		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
-	public void register(MicroService m) {
+	public synchronized void register(MicroService m) {
 		// TODO Auto-generated method stub
+		microServiceQueues.putIfAbsent(m,k -> new LinkedList<>());
 
 	}
 
 	@Override
-	public void unregister(MicroService m) {
+	public synchronized void unregister(MicroService m) {
 		// TODO Auto-generated method stub
+
+		microServiceQueues.remove(m);
+		for (Queue<MicroService> subscribers : eventSubscribers.values()) {
+   			 subscribers.remove(m);
+		}
+		for (Queue<MicroService> subscribers : broadcastSubscribers.values()) {
+   			subscribers.remove(m);
+		}
+
 
 	}
 
 	@Override
-	public Message awaitMessage(MicroService m) throws InterruptedException {
+	public synchronized Message awaitMessage(MicroService m) throws InterruptedException {
 		// TODO Auto-generated method stub
 		return null;
 	}
