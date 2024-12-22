@@ -39,22 +39,24 @@ public class Future<T> {
                 this.wait();
 			} catch (InterruptedException e) {
 				Thread.currentThread().interrupt(); // closing action
-				return null; 
+				return null;
 			}
+
+		}
 		return this.result;
 	}
 	
 	/**
      * Resolves the result of this Future object.
      */
-	public synchronized  void resolve (T otherResult) {
+
+	public synchronized void resolve (T result) {
 		//TODO: implement this.
 		if(!this.isDone){
-			this.result= otherResult;
+			this.result= result;
 			this.isDone= true;
 			notifyAll();
 		}
-
 	}
 	
 	/**
