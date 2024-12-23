@@ -1,5 +1,9 @@
 package bgu.spl.mics;
 
+import java.util.LinkedList;
+import java.util.Queue;
+import java.util.concurrent.ConcurrentHashMap;
+
 /**
  * The {@link MessageBusImpl class is the implementation of the MessageBus interface.
  * Write your implementation here!
@@ -11,8 +15,8 @@ public class MessageBusImpl implements MessageBus {
 	private static MessageBusImpl instance=null; //singleton
 
 	private final ConcurrentHashMap<Class<? extends Event<?>>, Queue<MicroService>> eventSubscribers = new ConcurrentHashMap<>(); // events map
-	private final ConcurrentHashMap<Class<? extends Broadcast<?>>, Queue<MicroService>> broadcastSubscribers = new ConcurrentHashMap<>(); // broadcast map
-	private final ConcurrentHashMap<MicroService, Queue<messege>> microServiceQueues= new ConcurrentHashMap<>(); // micro service map
+	private final ConcurrentHashMap<Class<? extends Broadcast>, Queue<MicroService>> broadcastSubscribers = new ConcurrentHashMap<>(); // broadcast map
+	private final ConcurrentHashMap<MicroService, Queue<Message>> microServiceQueues= new ConcurrentHashMap<>(); // micro service map
 	
 	private MessageBusImpl() {}
 
@@ -45,7 +49,7 @@ public class MessageBusImpl implements MessageBus {
 	@Override
 	public synchronized void sendBroadcast(Broadcast b) {
 		// TODO Auto-generated method stub
-		for(MicroService ms : broadcastSubscribers.get(b)){
+		for(MicroService ms : broadcastSubscribers.get(b.getClass())){
 			microServiceQueues.computeIfAbsent(ms, k -> new LinkedList<>()).add(b);
 		}
 	}
@@ -60,7 +64,7 @@ public class MessageBusImpl implements MessageBus {
 	@Override
 	public synchronized void register(MicroService m) {
 		// TODO Auto-generated method stub
-		microServiceQueues.putIfAbsent(m,k -> new LinkedList<>());
+		microServiceQueues.putIfAbsent(m,new LinkedList<>());
 
 	}
 
